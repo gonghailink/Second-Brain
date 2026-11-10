@@ -9,7 +9,8 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "second-brain-db"
+			"database_name": "second-brain-db",
+			"database_id": "88791495-ec52-4bdd-89eb-8fa2bc5cd0dd"
 		}
 	],
 	"vectorize": [
@@ -23,7 +24,8 @@
 	},
 	"kv_namespaces": [
 		{
-			"binding": "OAUTH_KV"
+			"binding": "OAUTH_KV",
+			"id": "f417a33f7f2f4ae78d8d545d5359b583"
 		}
 	],
 	"vars": {

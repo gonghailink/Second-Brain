@@ -2,6 +2,9 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "second-brain",
 	"main": "src/index.ts",
+	"routes": [
+		{ "pattern": "brain.333200.xyz", "custom_domain": true }
+	],
 	"compatibility_date": "2026-06-17",
 	"compatibility_flags": [
 		"nodejs_compat"

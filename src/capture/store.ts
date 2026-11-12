@@ -9,7 +9,7 @@ import { deleteEntryVectors } from "../vectorize/batch";
 import { newVectorIds as mintVectorIds } from "../vectorize/ids";
 import { rememberTags } from "../tags/vocabulary";
 import { applyTagReplacement, withUserEditMarker } from "../tags/system";
-import { extractHashtags } from "../text/hashtags";
+import { extractHashtags, extractHashtagsKeepLines } from "../text/hashtags";
 import { isVectorizeUnavailable } from "../vectorize/health";
 import { tagsAfterWrite, tagsAfterAppend } from "../memory/stale";
 import { withVolatility, type Volatility } from "../memory/volatility";
@@ -335,7 +335,10 @@ export async function updateEntryContent(
   // Same treatment captureEntry gives every stored memory, which is the point — but note it
   // flattens all whitespace, so a replacement does not preserve line breaks or code fences.
   // `appendToEntry` deliberately does not flatten; prefer append when the shape matters.
-  const { cleanContent, hashtags } = extractHashtags(newContent);
+  // 大迁都补丁（2026-11-12 总工程师）：update 保留换行与结构——原版 extractHashtags 压平所有空白，
+  // 会把整篇 markdown 存成一行（判例：恢复协议/使用手册等 6 篇曾被压平）。hashtags 照常收割，
+  // 横向空白照常归一，仅换行保留；capture 主路径不动（去重与向量口径不变）。
+  const { cleanContent, hashtags } = extractHashtagsKeepLines(newContent);
   // Content that is nothing but hashtags cleans down to "", which would blank the entry —
   // keep it as written in that case and let the tags be extracted anyway.
   const finalContent = cleanContent || newContent;

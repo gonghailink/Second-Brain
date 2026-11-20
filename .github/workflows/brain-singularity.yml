@@ -1,0 +1,28 @@
+name: brain-singularity
+
+# 血统：总纲 ce5f09bf 七节「GitHub 信息系统运作 v1」（2026-11-20 掌舵人钦定）
+# 大脑奇点总结器点火线——同步模式直连 /run 等跑完
+# （免费版 Worker waitUntil 仅活约 30s，115s 异步任务会静默阵亡，故外部同步点火）
+# 宁缺毋滥：fresh=0 或判定无奇点时零产出，job 照样绿
+
+on:
+  schedule:
+    - cron: '30 20 * * *'   # UTC 20:30 = 北京 04:30
+  workflow_dispatch: {}
+
+jobs:
+  ignite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ignite summarizer (sync)
+        env:
+          SUMMARIZER_TOKEN: ${{ secrets.SUMMARIZER_TOKEN }}
+        run: |
+          echo "ignite at $(date -u)"
+          RESP=$(curl -sk --http1.1 --tlsv1.2 --max-time 300 -X POST \
+            -H "Authorization: Bearer $SUMMARIZER_TOKEN" \
+            -H "Content-Type: application/json" \
+            https://brain-summarizer.gonghai.workers.dev/run)
+          echo "$RESP" | head -c 2000
+          echo ""
+          echo "$RESP" | grep -q '"ok":true' || { echo "IGNITE FAILED"; exit 1; }

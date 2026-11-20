@@ -1,0 +1,17 @@
+name: actions-probe
+
+# Minimal probe: verify GitHub Actions can start on this account.
+# Public repo = zero billable minutes. Read-only /health call.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: probe
+        run: |
+          echo "probe at $(date -u)"
+          curl -sk --http1.1 --max-time 60 https://brain-summarizer.gonghai.workers.dev/health
+          echo ""

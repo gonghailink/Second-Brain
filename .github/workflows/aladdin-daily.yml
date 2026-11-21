@@ -4,7 +4,7 @@ name: aladdin-daily
 # 数据湖采集农场 + 引擎入库点火，合体一线：
 #   job1 harvest = checkout 私仓跑 harvest.mjs → metrics commit 回仓
 #     （FRED/CFTC 等被 CDN 屏蔽数据中心 IP 的源 Actions 侧 0 点属正常，CF 引擎管道兜底）
-#   job2 ingest  = 引擎 16 源逐源点火（per-source 独立 invocation·批次5架构改造血统）
+#   job2 ingest  = 引擎 18 源逐源点火（per-source 独立 invocation·批次5架构改造血统）
 # 无新数据不虚账：harvest 无新点则不产生 commit
 
 on:
@@ -41,14 +41,14 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: engine per-source ignition (16 sources)
+      - name: engine per-source ignition (18 sources)
         env:
           ALADDIN_TOKEN: ${{ secrets.ALADDIN_TOKEN }}
         run: |
           BASE="https://aladdin.333200.xyz"
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
           FAIL=0
-          for src in fred sec cftc wb frx safe ndrc caam eastmoney tic gov_policy scfi coingecko fao stats rbi; do
+          for src in fred sec cftc wb frx safe ndrc caam eastmoney tic gov_policy scfi coingecko fao stats rbi nbim eurostat; do
             echo "==> $src"
             RESP=$(curl -sS -m 150 -H "Authorization: Bearer $ALADDIN_TOKEN" -H "User-Agent: $UA" "$BASE/ingest?source=$src" | head -c 300) || FAIL=1
             echo "$RESP"

@@ -8,6 +8,9 @@ name: aladdin-daily
 # 无新数据不虚账：harvest 无新点则不产生 commit
 # 2026-11-21 加 push 心跳扳机：fork 仓 dispatch 422（UI-only enablement 层）绕行——
 #   push .github/heartbeat.json → 只跑 ingest（快验）；schedule/dispatch → 全量
+# 2026-11-22 行读纪律立法（限额案二次发作·D1 免费层 5M 行/天=账户级共享）：
+#   心跳快验改单源 coingecko（~千行 vs 18 源全量 ~5-8 万行）；schedule/dispatch 保持 18 源全量不动
+#   采集质量数量红线：per-source 独立 invocation 结构与 18 源清单永不因省行读而裁剪
 
 on:
   schedule:
@@ -48,14 +51,16 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: engine per-source ignition (18 sources)
+      - name: engine per-source ignition (18 sources / heartbeat=1)
         env:
           ALADDIN_TOKEN: ${{ secrets.ALADDIN_TOKEN }}
         run: |
           BASE="https://aladdin.333200.xyz"
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
           FAIL=0
-          for src in fred sec cftc wb frx safe ndrc caam eastmoney tic gov_policy scfi coingecko fao stats rbi nbim eurostat; do
+          SRCS="fred sec cftc wb frx safe ndrc caam eastmoney tic gov_policy scfi coingecko fao stats rbi nbim eurostat"
+          if [ "${{ github.event_name }}" = "push" ]; then SRCS="coingecko"; fi
+          for src in $SRCS; do
             echo "==> $src"
             RESP=$(curl -sS -m 150 -H "Authorization: Bearer $ALADDIN_TOKEN" -H "User-Agent: $UA" "$BASE/ingest?source=$src" | head -c 300) || FAIL=1
             echo "$RESP"

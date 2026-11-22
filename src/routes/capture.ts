@@ -74,6 +74,16 @@ export async function handleCaptureRoutes(
   ctx: ExecutionContext,
 ): Promise<Response | null> {
   // POST /capture
+  // 十一大类标签闸（2026-11-22 掌舵人钦定·标签三方公约 c31f7338 十大类+大脑总结升格·防乱打标硬闸：不信任自觉，信任闸门）
+  const TEN_CATEGORY_TAGS = ["大脑系统", "大脑引擎", "系统", "提示词", "大脑项目", "工具与技能", "会话记录", "掌舵人", "大脑数据", "开发项目", "大脑总结"] as const;
+  function tenCategoryGate(tags: unknown): string | null {
+    if (tags === undefined) return null; // update 不传 tags = 不改标签，放行
+    if (!Array.isArray(tags) || tags.length === 0 || !tags.some(t => typeof t === "string" && (TEN_CATEGORY_TAGS as readonly string[]).includes(t))) {
+      return `tags must include at least one eleven-category tag (标签三方公约 c31f7338+大脑总结升格): ${TEN_CATEGORY_TAGS.join("/")}`;
+    }
+    return null;
+  }
+
   if (url.pathname === "/capture" && request.method === "POST") {
     const auth = await requireIdentity(request, env);
     if (auth instanceof Response) return auth;
@@ -88,6 +98,8 @@ export async function handleCaptureRoutes(
     if (body.tags !== undefined && !validInputTags(body.tags)) return json({ ok: false, error: `tags must contain at most ${MAX_INPUT_TAGS} NUL-free strings of at most ${MAX_INPUT_TAG_CHARS} characters` }, 400);
     const badProjectTag = body.tags === undefined ? null : projectTagError(body.tags);
     if (badProjectTag) return json({ ok: false, error: badProjectTag }, 400);
+    const tenCatError = tenCategoryGate(body.tags);
+    if (tenCatError) return json({ ok: false, error: tenCatError }, 400);
     if (typeof body.content === "string" && body.content.includes("\0")) return json({ ok: false, error: "NUL is not allowed" }, 400);
     if (!body.content?.trim()) return json({ ok: false, error: "content is required" }, 400);
     // Rahil's decision (18-copy-deck.md 6.8): 128 KB per note, so a very large paste cannot
@@ -351,6 +363,8 @@ export async function handleCaptureRoutes(
     const hasValidity = body.valid_from !== undefined || body.valid_until !== undefined;
     if (body.content === undefined && !hasValidity) return json({ ok: false, error: "Nothing to update: pass content, valid_from or valid_until." }, 400);
     if (body.content === undefined && (body.tags !== undefined || body.volatility !== undefined)) return json({ ok: false, error: "To change tags or volatility, pass content too." }, 400);
+    const tenCatError = tenCategoryGate(body.tags);
+    if (tenCatError) return json({ ok: false, error: tenCatError }, 400);
     if (body.content !== undefined && body.valid_from !== undefined) return json({ ok: false, error: VALIDITY_WITH_CONTENT_ERROR, field: "valid_from" }, 400);
     const validityCfg = hasValidity ? await resolveConfig(env) : null;
     const validity = hasValidity ? parseValidityInput(body, Date.now(), (validityCfg as Config).TIMEZONE, { allowNull: true }) : null;

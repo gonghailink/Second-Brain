@@ -2,9 +2,11 @@ name: brain-backup
 
 # 灵魂保险（2026-11-22 掌舵人钦立）：每日全量快照 second-brain 档案到本仓 backups/
 # - 上游系统自带 Web 手动备份（导出 JSON/Markdown·从备份恢复），本 workflow 把它自动化
-# - 成本：~129 entries × 1 次/天，D1 行读几千/天（限额案 4dc381a7 资源闸预算内）
-# - 恢复路径：Web 端「从备份恢复」上传 JSON，或 /import 端点
-# - 打卡纪律：JSON 校验 entries>100，防把错误页当备份 commit
+# - **GPG 对称加密存储**：快照含密钥库条目等敏感内容，明文会被 GitHub 秘密扫描推送保护拦截（GH013 实锤）——密文入库
+# - 解密：gpg -d --batch --passphrase <BACKUP_PASS> brain-DATE.json.gpg（密码在 repo secret BACKUP_PASS + 本地 /root/.secrets/brain-backup-pass）
+# - 恢复路径：解密得 JSON → Web 端「从备份恢复」上传，或 /import 端点
+# - 打卡纪律：解密后校验 entries>100，防把错误页当备份 commit
+# - 成本：~130 entries × 1 次/天，D1 行读几千/天（限额案 4dc381a7 资源闸预算内）
 
 on:
   schedule:
@@ -23,30 +25,36 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - name: export brain JSON
+      - name: export brain JSON (encrypted)
         env:
           BRAIN_TOKEN: ${{ secrets.BRAIN_TOKEN }}
+          BACKUP_PASS: ${{ secrets.BACKUP_PASS }}
         run: |
           mkdir -p backups
           DATE=$(date -u +%F)
           HTTP=$(curl -sS --http1.1 --tlsv1.2 -m 300 -w '%{http_code}' \
-            -o "backups/brain-$DATE.json" \
+            -o /tmp/brain-raw.json \
             -H "Authorization: Bearer $BRAIN_TOKEN" \
             -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36" \
             "https://brain.333200.xyz/export")
-          echo "export http=$HTTP size=$(wc -c < backups/brain-$DATE.json) bytes"
+          echo "export http=$HTTP size=$(wc -c < /tmp/brain-raw.json) bytes"
           [ "$HTTP" = "200" ] || { echo "export failed (http=$HTTP)"; exit 1; }
+          gpg --batch --yes --symmetric --cipher-algo AES256 --passphrase "$BACKUP_PASS" \
+            --output "backups/brain-$DATE.json.gpg" /tmp/brain-raw.json
+          rm -f /tmp/brain-raw.json
+          echo "encrypted: $(wc -c < backups/brain-$DATE.json.gpg) bytes"
 
-      - name: validate snapshot
+      - name: validate snapshot (decrypt + count)
+        env:
+          BACKUP_PASS: ${{ secrets.BACKUP_PASS }}
         run: |
-          python3 - <<'PY'
-          import json, glob
-          f = sorted(glob.glob('backups/brain-*.json'))[-1]
-          d = json.load(open(f))
-          entries = d.get('entries', d if isinstance(d, list) else [])
-          assert len(entries) > 100, f'entry count suspicious: {len(entries)}'
-          print(f'validated: {f} entries={len(entries)}')
-          PY
+          F=$(ls -t backups/brain-*.json.gpg | head -1)
+          gpg --batch --yes -d --passphrase "$BACKUP_PASS" "$F" | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)
+          entries = d.get("entries", d if isinstance(d, list) else [])
+          assert len(entries) > 100, f"entry count suspicious: {len(entries)}"
+          print(f"validated: {len(entries)} entries")'
 
       - name: commit snapshot
         run: |
@@ -54,6 +62,6 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add backups/
           git diff --cached --quiet && echo "no change (同日重跑同内容)" || {
-            git commit -qm "brain backup $(date -u +%FT%TZ)"
+            git commit -qm "brain backup (gpg) $(date -u +%FT%TZ)"
             git push
           }

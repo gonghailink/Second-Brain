@@ -1,0 +1,59 @@
+name: brain-backup
+
+# 灵魂保险（2026-11-22 掌舵人钦立）：每日全量快照 second-brain 档案到本仓 backups/
+# - 上游系统自带 Web 手动备份（导出 JSON/Markdown·从备份恢复），本 workflow 把它自动化
+# - 成本：~129 entries × 1 次/天，D1 行读几千/天（限额案 4dc381a7 资源闸预算内）
+# - 恢复路径：Web 端「从备份恢复」上传 JSON，或 /import 端点
+# - 打卡纪律：JSON 校验 entries>100，防把错误页当备份 commit
+
+on:
+  schedule:
+    - cron: '30 21 * * *'   # UTC 21:30 = 北京 05:30（大脑闲时·避开 D1 午夜重置与点火高峰）
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: export brain JSON
+        env:
+          BRAIN_TOKEN: ${{ secrets.BRAIN_TOKEN }}
+        run: |
+          mkdir -p backups
+          DATE=$(date -u +%F)
+          HTTP=$(curl -sS --http1.1 --tlsv1.2 -m 300 -w '%{http_code}' \
+            -o "backups/brain-$DATE.json" \
+            -H "Authorization: Bearer $BRAIN_TOKEN" \
+            -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36" \
+            "https://brain.333200.xyz/export")
+          echo "export http=$HTTP size=$(wc -c < backups/brain-$DATE.json) bytes"
+          [ "$HTTP" = "200" ] || { echo "export failed (http=$HTTP)"; exit 1; }
+
+      - name: validate snapshot
+        run: |
+          python3 - <<'PY'
+          import json, glob
+          f = sorted(glob.glob('backups/brain-*.json'))[-1]
+          d = json.load(open(f))
+          entries = d.get('entries', d if isinstance(d, list) else [])
+          assert len(entries) > 100, f'entry count suspicious: {len(entries)}'
+          print(f'validated: {f} entries={len(entries)}')
+          PY
+
+      - name: commit snapshot
+        run: |
+          git config user.name "brain-backup-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add backups/
+          git diff --cached --quiet && echo "no change (同日重跑同内容)" || {
+            git commit -qm "brain backup $(date -u +%FT%TZ)"
+            git push
+          }

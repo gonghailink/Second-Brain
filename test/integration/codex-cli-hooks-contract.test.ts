@@ -249,7 +249,7 @@ describe("capture-worker.js", () => {
     const captures = captured.filter(c => c.url === "/capture");
     expect(captures).toHaveLength(1);
     const body = JSON.parse(captures[0].body);
-    expect(body).toMatchObject({ source: "codex-session", workspace: "personal", project: "brain-app", tags: ["brain-app"] });
+    expect(body).toMatchObject({ source: "codex-session", workspace: "personal", project: "brain-app", tags: ["brain-app", "会话记录"] });
     expect(body.content.startsWith(`Codex session in brain-app, ${new Date().toISOString().slice(0, 10)}`)).toBe(true);
     expect(body.content).toContain("User: The nightly digest cron is starving the sync job again");
     expect(body.content).toContain("User: OK, run it inside the existing hourly slot");

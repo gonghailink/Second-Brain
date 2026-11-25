@@ -70,7 +70,7 @@ function call(method: string, path: string, token: string, body?: unknown): Prom
 const jsonOf = async (res: Response) => res.json() as Promise<any>;
 
 async function capture(token: string, content: string): Promise<string> {
-  const res = await call("POST", "/capture", token, { content, tags: ["work"] });
+  const res = await call("POST", "/capture", token, { content, tags: ["work", "系统"] });
   const body = await jsonOf(res);
   expect(res.status, JSON.stringify(body)).toBe(200);
   return body.id as string;

@@ -157,7 +157,7 @@ describe("POST /capture", () => {
 
   it("merges hashtag tags with explicit tags and deduplicates case-insensitively", async () => {
     const { ctx, drain } = makeCtx();
-    const res = await worker.fetch(req("POST", "/capture", { body: { content: "note #health", tags: ["Health", "fitness"] } }), env, ctx);
+    const res = await worker.fetch(req("POST", "/capture", { body: { content: "note #health", tags: ["Health", "fitness", "系统"] } }), env, ctx);
     await drain();
     expect(res.status).toBe(200);
     const tags: string[] = JSON.parse(db.entries[0].tags);
@@ -168,12 +168,12 @@ describe("POST /capture", () => {
 
   it("behaves identically when no hashtags are present (regression)", async () => {
     const { ctx, drain } = makeCtx();
-    const res = await worker.fetch(req("POST", "/capture", { body: { content: "plain note", tags: ["work"] } }), env, ctx);
+    const res = await worker.fetch(req("POST", "/capture", { body: { content: "plain note", tags: ["work", "系统"] } }), env, ctx);
     await drain();
     expect(res.status).toBe(200);
     expect(db.entries[0].content).toBe("plain note");
     const tags = JSON.parse(db.entries[0].tags);
-    expect(tags).toEqual(["work"]);
+    expect(tags).toEqual(["work", "系统"]);
   });
 
   it("embeds an entry whose tag contains '.' or '\"' — metadata keys are sanitized (regression #210)", async () => {
@@ -190,7 +190,7 @@ describe("POST /capture", () => {
     env = makeTestEnv(db, { VECTORIZE: makeVectorizeMock({ upsert: upsertMock }) });
 
     const res = await worker.fetch(
-      req("POST", "/capture", { body: { content: "Django compat notes", tags: ['v3.9 notes', 'a"b'] } }),
+      req("POST", "/capture", { body: { content: "Django compat notes", tags: ['v3.9 notes', 'a"b', "系统"] } }),
       env, ctx
     );
     await drain();
@@ -203,7 +203,7 @@ describe("POST /capture", () => {
     expect(Object.keys(vector.metadata).some(k => /[."]/.test(k))).toBe(false);
     expect(vector.metadata["tag_v3_9 notes"]).toBe(true);
     // ...while the canonical tags array keeps the originals verbatim.
-    expect(vector.metadata.tags).toEqual(['v3.9 notes', 'a"b']);
+    expect(vector.metadata.tags).toEqual(['v3.9 notes', 'a"b', "系统"]);
   });
 
   it("falls back to original content when input is only hashtags", async () => {

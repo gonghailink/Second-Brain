@@ -248,7 +248,7 @@ function buildCaptureBody(turns, meta) {
   const body = {
     content,
     source: 'claude-code',
-    tags: rawName ? [rawName] : [],
+    tags: rawName ? [rawName, "会话记录"] : ["会话记录"],
     workspace: meta.workspace,
   };
   if (meta.project) body.project = meta.project;

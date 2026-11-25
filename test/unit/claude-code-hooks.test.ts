@@ -318,13 +318,13 @@ describe("session-end.formatSession / shouldCapture / buildCaptureBody", () => {
   it("sends the raw project name as a tag alongside the legal slug", () => {
     const turns = end.readTranscriptTail(FIXTURE);
     const body = end.buildCaptureBody(turns, { ...meta, project: "next-js", projectName: "next.js" });
-    expect(body).toMatchObject({ project: "next-js", tags: ["next.js"] });
+    expect(body).toMatchObject({ project: "next-js", tags: ["next.js", "会话记录"] });
   });
   it("omits the project but keeps the tag when the name has no legal slug", () => {
     const turns = end.readTranscriptTail(FIXTURE);
     const body = end.buildCaptureBody(turns, { ...meta, project: null, projectName: "..." });
     expect(body).not.toHaveProperty("project");
-    expect(body.tags).toEqual(["..."]);
+    expect(body.tags).toEqual(["...", "会话记录"]);
   });
 });
 

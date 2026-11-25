@@ -743,7 +743,7 @@ describe("the layer parameter every non-browser client depends on", () => {
     it("stores a capture in the company layer when asked for it by name", async () => {
       const res = await call("POST", "/capture", {
         content: "Company: the release train leaves on Thursdays",
-        tags: ["work"],
+        tags: ["work", "系统"],
         source: "cli",
         workspace: "company",
       });
@@ -784,7 +784,7 @@ describe("the layer parameter every non-browser client depends on", () => {
       // this repository would "tidy" without noticing anything downstream.
       const posted = (await (await call("POST", "/capture", {
         content: "Release train leaves Thursdays",
-        tags: ["work", "process"],
+        tags: ["work", "process", "系统"],
         source: "cli",
       })).json()) as { id: string };
 
@@ -904,7 +904,9 @@ describe("the layer parameter every non-browser client depends on", () => {
       // the assertion that says so: personal, not the org default's business.
       const res = await call("POST", "/capture", {
         content: "Unlabelled: buy milk",
-        tags: [],
+        // Was tags: [] — the eleven-category gate rejects an empty tag list, so
+        // one category tag rides along; the workspace-axis assertions are unchanged.
+        tags: ["系统"],
         source: "cli",
       });
       const body = (await res.json()) as { id: string };

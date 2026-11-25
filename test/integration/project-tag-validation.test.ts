@@ -26,7 +26,7 @@ describe("project: tag validation on write routes", () => {
   });
 
   it("POST /capture accepts a valid project tag without creating any registry state", async () => {
-    const res = await worker.fetch(req("POST", "/capture", { body: { content: "note", tags: ["project:my-app"] } }), env, ctx);
+    const res = await worker.fetch(req("POST", "/capture", { body: { content: "note", tags: ["project:my-app", "开发项目"] } }), env, ctx);
 
     expect(res.status).toBe(200);
     expect(JSON.parse(db.entries[0].tags)).toContain("project:my-app");
@@ -35,7 +35,9 @@ describe("project: tag validation on write routes", () => {
   it("POST /update rejects a malformed project tag before touching the entry", async () => {
     db.entries.push({ id: "e1", content: "old", tags: '["work"]', source: "api", created_at: 1, vector_ids: '["e1"]', recall_count: 0, importance_score: 3 });
 
-    const res = await worker.fetch(req("POST", "/update", { body: { id: "e1", content: "new", tags: ["project:Bad Slug!"] } }), env, ctx);
+    // A category tag rides along so the eleven-category gate passes and the
+    // project-tag validation is the check that fires, as this test intends.
+    const res = await worker.fetch(req("POST", "/update", { body: { id: "e1", content: "new", tags: ["project:Bad Slug!", "系统"] } }), env, ctx);
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ ok: false, error: BAD });
@@ -45,9 +47,9 @@ describe("project: tag validation on write routes", () => {
   it("POST /update lets a caller add and remove project membership by tag replacement", async () => {
     db.entries.push({ id: "e1", content: "old", tags: '["project:a","work"]', source: "api", created_at: 1, vector_ids: '["e1"]', recall_count: 0, importance_score: 3 });
 
-    const res = await worker.fetch(req("POST", "/update", { body: { id: "e1", content: "new", tags: ["work", "project:b"] } }), env, ctx);
+    const res = await worker.fetch(req("POST", "/update", { body: { id: "e1", content: "new", tags: ["work", "project:b", "开发项目"] } }), env, ctx);
 
     expect(res.status).toBe(200);
-    expect(JSON.parse(db.entries[0].tags)).toEqual(["work", "project:b"]);
+    expect(JSON.parse(db.entries[0].tags)).toEqual(["work", "project:b", "开发项目"]);
   });
 });

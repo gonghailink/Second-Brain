@@ -429,7 +429,7 @@ describe("core.buildSessionCaptureBody", () => {
     expect(body.content.startsWith("Codex session in brain-app, 2026-09-27")).toBe(true);
     expect(body.content).toContain("User: first thing said");
     expect(body.content).toContain("User: second thing said");
-    expect(body).toMatchObject({ source: "codex-session", project: "brain-app", workspace: "personal", tags: ["brain-app"] });
+    expect(body).toMatchObject({ source: "codex-session", project: "brain-app", workspace: "personal", tags: ["brain-app", "会话记录"] });
   });
   it("keeps only the last N user turns", () => {
     const body = core.buildSessionCaptureBody(["one", "two", "three", "four"], meta, { wantUserTurns: 3 });

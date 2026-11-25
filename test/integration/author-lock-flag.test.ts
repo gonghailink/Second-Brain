@@ -53,7 +53,7 @@ const jsonOf = async (res: Response) => res.json() as Promise<any>;
 
 /** Capture through the real route, so the row lands with the identity's own workspace and actor. */
 async function capture(token: string, content: string, workspace?: "personal" | "company"): Promise<string> {
-  const res = await call("POST", "/capture", token, { content, tags: ["work"], workspace });
+  const res = await call("POST", "/capture", token, { content, tags: ["work", "系统"], workspace });
   const body = await jsonOf(res);
   expect(res.status, JSON.stringify(body)).toBe(200);
   return body.id as string;

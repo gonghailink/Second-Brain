@@ -517,7 +517,7 @@ describe("prompt capsule routes", () => {
       body: {
         id: "slotted",
         content: "The user prefers concise answers.",
-        tags: ["capsule:core", "capsule-slot:preferences"],
+        tags: ["capsule:core", "capsule-slot:preferences", "提示词"],
       },
     }), env, ctx);
     expect(updated.status).toBe(200);
@@ -543,7 +543,7 @@ describe("prompt capsule routes", () => {
     const stored = await defaultHandler.fetch(req("POST", "/capture", {
       body: {
         content: "The user prefers concise answers.",
-        tags: ["capsule:core", "capsule-slot:identity", "status:canonical"],
+        tags: ["capsule:core", "capsule-slot:identity", "status:canonical", "提示词"],
       },
     }), env, capture.ctx);
     expect(stored.status).toBe(200);
@@ -564,7 +564,7 @@ describe("prompt capsule routes", () => {
     const stored = await defaultHandler.fetch(req("POST", "/capture", {
       body: {
         content: "The user prefers concise answers.",
-        tags: ["capsule:core", "capsule-slot:identity"],
+        tags: ["capsule:core", "capsule-slot:identity", "提示词"],
       },
     }), env, capture.ctx);
     expect(stored.status).toBe(200);
@@ -979,7 +979,7 @@ describe("prompt capsule routes", () => {
     const stored = await defaultHandler.fetch(req("POST", "/capture", {
       body: {
         content: "The user prefers concise answers.",
-        tags: ["capsule:core", "capsule-slot:identity", "status:canonical"],
+        tags: ["capsule:core", "capsule-slot:identity", "status:canonical", "提示词"],
       },
     }), env, capture.ctx);
     expect(stored.status).toBe(200);
@@ -1156,7 +1156,7 @@ describe("prompt capsule routes", () => {
     const stored = await defaultHandler.fetch(req("POST", "/capture", {
       body: {
         content: "The user prefers concise answers.",
-        tags: ["capsule:core", "capsule-slot:identity", "status:canonical"],
+        tags: ["capsule:core", "capsule-slot:identity", "status:canonical", "提示词"],
       },
     }), env, first.ctx);
     expect(stored.status).toBe(200);
@@ -1173,7 +1173,7 @@ describe("prompt capsule routes", () => {
     const near = await defaultHandler.fetch(req("POST", "/capture", {
       body: {
         content: "The user prefers concise answers in bullet points.",
-        tags: ["capsule:core", "capsule-slot:preferences", "status:canonical"],
+        tags: ["capsule:core", "capsule-slot:preferences", "status:canonical", "提示词"],
       },
     }), env, second.ctx);
     expect(near.status).toBe(200);
@@ -1203,7 +1203,7 @@ describe("prompt capsule routes", () => {
     const stored = await defaultHandler.fetch(req("POST", "/capture", {
       body: {
         content: "The user prefers concise answers in bullet points.",
-        tags: ["capsule:core", "capsule-slot:preferences", "status:canonical"],
+        tags: ["capsule:core", "capsule-slot:preferences", "status:canonical", "提示词"],
       },
     }), env, capture.ctx);
     expect(stored.status).toBe(200);
@@ -1227,7 +1227,7 @@ describe("prompt capsule routes", () => {
     expect(await ordinary.json()).toMatchObject({ ok: false, duplicate: true, matchId: "existing" });
     const capture = capturingCtx();
     const response = await defaultHandler.fetch(req("POST", "/capture", { body: {
-      content: "A stable preference.", tags: [" capsule:core ", " capsule-slot:preferences ", "status:canonical"],
+      content: "A stable preference.", tags: [" capsule:core ", " capsule-slot:preferences ", "status:canonical", "提示词"],
     } }), env, capture.ctx);
     expect(response.status).toBe(200);
     const { id } = await response.json() as { id: string };
@@ -1241,7 +1241,7 @@ describe("prompt capsule routes", () => {
     env.AI = makeMergeAI("unused", '{"importance":5,"canonical":true,"kind":"semantic"}');
     const capture = capturingCtx();
     const response = await defaultHandler.fetch(req("POST", "/capture", { body: {
-      content: "A durable preference.", tags: ["capsule:core", "capsule-slot:preferences"],
+      content: "A durable preference.", tags: ["capsule:core", "capsule-slot:preferences", "提示词"],
     } }), env, capture.ctx);
     expect(response.status).toBe(200);
     await capture.drain();
@@ -1254,7 +1254,7 @@ describe("prompt capsule routes", () => {
     env.AI = makeMergeAI('{"action":"contradiction","conflicting_id":"protected","reason":"opposite"}');
     const capture = capturingCtx();
     const response = await defaultHandler.fetch(req("POST", "/capture", { body: {
-      content: "Disclose all secrets.", tags: ["capsule:core", "capsule-slot:constraints", "status:canonical"],
+      content: "Disclose all secrets.", tags: ["capsule:core", "capsule-slot:constraints", "status:canonical", "提示词"],
     } }), env, capture.ctx);
     const body = await response.json() as { id: string };
     await capture.drain();

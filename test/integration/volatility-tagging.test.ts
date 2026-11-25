@@ -94,7 +94,7 @@ describe("volatility supplied by the calling model", () => {
 
     it("keeps the caller's own tags alongside the verdict", async () => {
       const res = await worker.fetch(
-        req("POST", "/capture", { body: { content: "A note", tags: ["work", "acme"], volatility: "volatile" } }),
+        req("POST", "/capture", { body: { content: "A note", tags: ["work", "acme", "系统"], volatility: "volatile" } }),
         env, ctx,
       );
       const tags = tagsOf(db, (await res.json() as any).id);
@@ -122,7 +122,7 @@ describe("volatility supplied by the calling model", () => {
     // one won over the enum. That made `tags[]` an override for a validated field.
     it("a differently-cased volatility tag cannot smuggle in a second verdict", async () => {
       const res = await worker.fetch(
-        req("POST", "/capture", { body: { content: "A note", tags: ["Volatility:durable"], volatility: "volatile" } }),
+        req("POST", "/capture", { body: { content: "A note", tags: ["Volatility:durable", "系统"], volatility: "volatile" } }),
         env, ctx,
       );
       const tags = tagsOf(db, (await res.json() as any).id);
@@ -132,7 +132,7 @@ describe("volatility supplied by the calling model", () => {
 
     it("an invalid cased tag cannot shadow the validated verdict", async () => {
       const res = await worker.fetch(
-        req("POST", "/capture", { body: { content: "A note", tags: ["Volatility:sometimes"], volatility: "durable" } }),
+        req("POST", "/capture", { body: { content: "A note", tags: ["Volatility:sometimes", "系统"], volatility: "durable" } }),
         env, ctx,
       );
       // Previously getVolatility found the junk tag first, failed its enum check and
@@ -146,7 +146,7 @@ describe("volatility supplied by the calling model", () => {
     // unclassified, which lowered its recall floor and invited the pass to overwrite it.
     it("an invalid verdict written directly into tags cannot shadow a valid one", async () => {
       const res = await worker.fetch(
-        req("POST", "/capture", { body: { content: "A note", tags: ["volatility:sometimes", "volatility:durable"] } }),
+        req("POST", "/capture", { body: { content: "A note", tags: ["volatility:sometimes", "volatility:durable", "系统"] } }),
         env, ctx,
       );
       expect(getVolatility(tagsOf(db, (await res.json() as any).id))).toBe("durable");
@@ -154,7 +154,7 @@ describe("volatility supplied by the calling model", () => {
 
     it("cannot produce two verdicts when tags already carry one", async () => {
       const res = await worker.fetch(
-        req("POST", "/capture", { body: { content: "A note", tags: ["volatility:durable"], volatility: "volatile" } }),
+        req("POST", "/capture", { body: { content: "A note", tags: ["volatility:durable", "系统"], volatility: "volatile" } }),
         env, ctx,
       );
       const tags = tagsOf(db, (await res.json() as any).id);

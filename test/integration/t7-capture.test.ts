@@ -78,7 +78,7 @@ describe("POST /capture — standing", () => {
 
   it("a caller-supplied standing:active tag is ignored and reported, with the specific note", async () => {
     const { ctx } = makeCtx();
-    const res = await worker.fetch(req("POST", "/capture", { body: { content: "an ordinary note", tags: ["standing:active"] } }), env, ctx);
+    const res = await worker.fetch(req("POST", "/capture", { body: { content: "an ordinary note", tags: ["standing:active", "系统"] } }), env, ctx);
     expect(res.status).toBe(200);
     const data = await res.json() as any;
     expect(data.message).toBe('Note: the tag "standing:active" was ignored; use standing: true.');

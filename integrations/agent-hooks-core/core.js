@@ -1035,7 +1035,7 @@ function buildSessionCaptureBody(userTurns, meta, { maxChars = CAPTURE_MAX_CONTE
   let content = redactSecrets(rendered, meta.token);
   if (content.length > maxChars) content = content.slice(0, maxChars - 1) + '…';
   const rawName = meta.projectName ?? meta.project;
-  const body = { content, source: meta.source, tags: rawName ? [rawName] : [], workspace: meta.workspace };
+  const body = { content, source: meta.source, tags: rawName ? [rawName, "会话记录"] : ["会话记录"], workspace: meta.workspace };
   if (meta.project) body.project = meta.project;
   return body;
 }

@@ -306,17 +306,16 @@ describe("POST /update and the MCP update tool write identical state (#289)", ()
       },
     },
     {
-      name: "(c) extraction flattens whitespace, including inside a fenced code block",
+      name: "(c) extraction keeps line breaks on update (fork patch #1), including inside a fenced code block",
       world: { seed: { content: "old runbook", tags: ["ops"] } },
       content: "Runbook:\n\n1. drain\n2. deploy\n\n```sh\nnpm run deploy\n```\n\nTicket #4821",
       expect: (s) => {
-        // Spelled out because it is destructive and, for the MCP path, new: the private copy
-        // stored content verbatim. extractHashtags collapses every whitespace run to one
-        // space and removes named #tokens, so line breaks, list structure and code fences do
-        // not survive a replacement. This is not a regression — captureEntry has always done
-        // it, so `remember` through this same transport produces a byte-identical row, and
-        // POST /update already did it. Divergence was the bug; this is what agreeing with
-        // the rest of the write path costs.
+        // FORK DIVERGENCE (大迁都补丁 #1, commit 0fbc563d): upstream flattens every
+        // whitespace run on update; this fork's updateEntryContent deliberately uses
+        // extractHashtagsKeepLines instead — horizontal whitespace is normalized and
+        // named #tokens are removed, but line breaks survive a replacement, so list
+        // structure and code fences are preserved. Both callers share that one write
+        // path, so parity is asserted against the line-preserving result below.
         //
         // `#4821` stays in the content and does NOT become a tag: a bare number is an issue
         // reference, and reading it as a tag produced rows carrying twenty numeric "tags"
@@ -325,7 +324,7 @@ describe("POST /update and the MCP update tool write identical state (#289)", ()
         // `append` deliberately does NOT flatten: it embeds the addition verbatim after a
         // "[Update <date>]: " separator (src/capture/store.ts), so newlines survive there.
         // Reach for append, not update, when the text's shape matters.
-        expect(s.row!.content).toBe("Runbook: 1. drain 2. deploy ```sh npm run deploy ``` Ticket #4821");
+        expect(s.row!.content).toBe("Runbook:\n\n1. drain\n2. deploy\n\n```sh\nnpm run deploy\n```\n\nTicket #4821");
         expect(tagsOf(s)).toEqual(["ops"]);
       },
     },

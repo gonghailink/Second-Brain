@@ -138,7 +138,7 @@ afterEach(() => sqlite?.close());
 
 describe("POST /capture with project", () => {
   it("unions project:<slug> into the tags, auto-creates the project and audits it", async () => {
-    const res = await call("POST", "/capture", ALICE, { content: "Decided to move hosting to Fly", tags: ["infra"], project: "website" });
+    const res = await call("POST", "/capture", ALICE, { content: "Decided to move hosting to Fly", tags: ["infra", "开发项目"], project: "website" });
 
     expect(res.status).toBe(200);
     const body = await jsonOf(res);
@@ -153,7 +153,9 @@ describe("POST /capture with project", () => {
   });
 
   it("caps the caller's tags only: 64 plus project and volatility stores 66", async () => {
-    const sixtyFour = Array.from({ length: 64 }, (_, i) => `t${i}`);
+    // Still exactly 64 caller tags; one slot carries the mandatory eleven-category
+    // tag the write gate requires, in place of the otherwise-arbitrary "t1".
+    const sixtyFour = Array.from({ length: 64 }, (_, i) => (i === 1 ? "系统" : `t${i}`));
 
     const res = await call("POST", "/capture", ALICE, { content: "full tag list, worker adds two more", tags: sixtyFour, project: "website", volatility: "durable" });
 

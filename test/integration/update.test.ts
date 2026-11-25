@@ -181,10 +181,10 @@ describe("POST /update", () => {
   it("removes a tag the user dropped", async () => {
     seedEntry(db, { tags: '["work","pricing"]' });
     await worker.fetch(
-      req("POST", "/update", { body: { id: "entry-abc", content: "New content", tags: ["work"] } }),
+      req("POST", "/update", { body: { id: "entry-abc", content: "New content", tags: ["work", "系统"] } }),
       env, ctx
     );
-    expect(JSON.parse(db.entries[0].tags)).toEqual(["work"]);
+    expect(JSON.parse(db.entries[0].tags)).toEqual(["work", "系统"]);
   });
 
   it("keeps the Worker's own tags through a replacement", async () => {
@@ -193,7 +193,9 @@ describe("POST /update", () => {
     // and dropping "anything not sent" would silently destroy both.
     seedEntry(db, { tags: '["work","kind:semantic","status:canonical","auto-pattern"]' });
     await worker.fetch(
-      req("POST", "/update", { body: { id: "entry-abc", content: "New content", tags: [] } }),
+      // The eleven-category gate rejects an empty tags array outright, so the
+      // replacement carries one category tag; the assertions below are unchanged.
+      req("POST", "/update", { body: { id: "entry-abc", content: "New content", tags: ["系统"] } }),
       env, ctx
     );
     const tags = JSON.parse(db.entries[0].tags);
@@ -217,11 +219,11 @@ describe("POST /update", () => {
   it("still accepts a #hashtag added in the same edit that removed one", async () => {
     seedEntry(db, { tags: '["work","pricing"]' });
     await worker.fetch(
-      req("POST", "/update", { body: { id: "entry-abc", content: "New content #signpath", tags: ["work"] } }),
+      req("POST", "/update", { body: { id: "entry-abc", content: "New content #signpath", tags: ["work", "系统"] } }),
       env, ctx
     );
     const tags = JSON.parse(db.entries[0].tags);
-    expect(tags.sort()).toEqual(["signpath", "work"]);
+    expect(tags.sort()).toEqual(["signpath", "work", "系统"]);
   });
 
   it("rejects a tags field that is not a list of strings", async () => {

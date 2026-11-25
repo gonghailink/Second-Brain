@@ -68,8 +68,8 @@ describe("versioning update", () => {
   });
 
   it("identical content and a reordered tag set writes no version", async () => {
-    await seed("e1", "same text", ["b", "a"]);
-    const res = await worker.fetch(req("POST", "/update", { body: { id: "e1", content: "same text", tags: ["a", "b"] } }), env, ctx);
+    await seed("e1", "same text", ["b", "a", "系统"]);
+    const res = await worker.fetch(req("POST", "/update", { body: { id: "e1", content: "same text", tags: ["a", "b", "系统"] } }), env, ctx);
     expect(res.status).toBe(200);
     expect(await versions("e1")).toEqual([]);
   });

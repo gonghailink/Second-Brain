@@ -212,7 +212,7 @@ describe("stop then sessionEnd: one capture per conversation", () => {
     expect(body.content).not.toContain("sk-abcdef1234567890ABCDEF");
     expect(body.content).toContain("[redacted]");
     expect(body.content.length).toBeLessThanOrEqual(2000);
-    expect(body.tags).toEqual(["brain-app"]);
+    expect(body.tags).toEqual(["brain-app", "会话记录"]);
   });
 
   it("many stops (one per agent turn) still produce exactly one capture", async () => {

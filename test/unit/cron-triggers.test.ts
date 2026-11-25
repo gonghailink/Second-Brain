@@ -104,15 +104,16 @@ describe("cron triggers", () => {
     expect(maintenance.length).toBeGreaterThan(0);
   });
 
-  // This deployment is AT five as of the team insight pass (spec 4.5) — the
-  // last slot the free plan allows. The assertion stays `<= 5` rather than
-  // `=== 5` because the ceiling is the fact worth pinning, but the message
-  // says where we are, so the next person adding a schedule reads "there is
-  // no sixth slot; displace one" instead of "five is a comfortable margin".
+  // This deployment uses four of the free plan's five slots since the team
+  // insight schedule was de-configured on 2026-11-22. The assertion stays
+  // `<= 5` rather than `=== 5` because the ceiling is the fact worth pinning,
+  // but the message says where we are, so the next person adding a schedule
+  // reads "one slot is free; a sixth schedule has to displace one" instead
+  // of "five is a comfortable margin".
   it("stays inside the free plan's five triggers", () => {
     expect(
       configuredCrons().length,
-      "the free plan allows five cron triggers and this deployment now uses all five — a sixth schedule has to displace one",
+      "the free plan allows five cron triggers and this deployment now uses four — a sixth schedule has to displace one",
     ).toBeLessThanOrEqual(5);
   });
 
@@ -135,8 +136,20 @@ describe("cron triggers", () => {
     expect(crons).toContain(INSIGHT_WEEKLY_CRON);
   });
 
-  it("configures the team insight schedule the worker routes on", () => {
-    expect(configuredCrons()).toContain(INSIGHT_TEAM_WEEKLY_CRON);
+  // The team insight schedule is deliberately NOT configured: on 2026-11-22
+  // its trigger ("45 2 * * SUN") was removed to free a free-plan slot, the
+  // pass being a no-op for a single-person brain. INSIGHT_TEAM_WEEKLY_CRON
+  // stays routed in code for when a slot frees up. Pin the configured set
+  // exactly as it stands, so re-adding a fifth schedule is a deliberate,
+  // reviewed change rather than drift.
+  it("configures exactly the four schedules this deployment runs", () => {
+    expect(configuredCrons()).toEqual([
+      "0 1 * * *",
+      INTEGRATION_SYNC_CRON,
+      INSIGHT_ACCRUAL_CRON,
+      INSIGHT_WEEKLY_CRON,
+    ]);
+    expect(configuredCrons()).not.toContain(INSIGHT_TEAM_WEEKLY_CRON);
   });
 
   // The personal weekly pass and the team one are two budgets on the same day

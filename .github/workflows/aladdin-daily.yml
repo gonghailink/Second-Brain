@@ -4,7 +4,7 @@ name: aladdin-daily
 # 数据湖采集农场 + 引擎入库点火，合体一线：
 #   job1 harvest = checkout 私仓跑 harvest.mjs → metrics commit 回仓
 #     （FRED/CFTC 等被 CDN 屏蔽数据中心 IP 的源 Actions 侧 0 点属正常，CF 引擎管道兜底）
-#   job2 ingest  = 引擎 24 源逐源点火（per-source 独立 invocation·批次5架构改造血统）
+#   job2 ingest  = 引擎 25 源逐源点火（per-source 独立 invocation·批次5架构改造血统）
 # 无新数据不虚账：harvest 无新点则不产生 commit
 # 2026-11-21 加 push 心跳扳机：fork 仓 dispatch 422（UI-only enablement 层）绕行——
 #   push .github/heartbeat.json → 只跑 ingest（快验）；schedule/dispatch → 全量
@@ -51,14 +51,14 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: engine per-source ignition (24 sources / heartbeat=1)
+      - name: engine per-source ignition (25 sources / heartbeat=1)
         env:
           ALADDIN_TOKEN: ${{ secrets.ALADDIN_TOKEN }}
         run: |
           BASE="https://aladdin.333200.xyz"
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
           FAIL=0
-          SRCS="fred sec cftc wb frx safe ndrc caam eastmoney tic gov_policy scfi coingecko fao stats rbi nbim eurostat pboc shfe lme mot_port caac ccma"
+          SRCS="fred sec cftc wb frx safe ndrc caam eastmoney tic gov_policy scfi coingecko fao stats rbi nbim eurostat pboc shfe lme mot_port caac ccma adsb"
           if [ "${{ github.event_name }}" = "push" ]; then SRCS="coingecko"; fi
           for src in $SRCS; do
             echo "==> $src"

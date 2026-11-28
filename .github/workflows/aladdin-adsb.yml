@@ -1,0 +1,35 @@
+name: aladdin-adsb
+
+# ADS-B 小时采样（采集侧前移·2026-11-28 点火）：CF Worker 出口被 adsb.lol 策略性 429（STEP0 实证），
+# 故采集前移至 Actions 侧：每小时对 adsb.lol 七大航空区圆+五围栏采样 → 样本 commit 回 aladdin-data 私仓
+# （adsb/samples/<北京日期>.json）；引擎 ingestADSB 只做日聚合落点（权威写入仍走引擎 /ingest）。
+# 形态沿 aladdin-daily 的 harvest job（checkout 私仓 → node → 无新数据不虚账 commit）。
+
+on:
+  schedule:
+    - cron: '13 * * * *'   # 每小时（UTC 分钟 13·避开整点拥堵）；样本按北京时间分日
+  workflow_dispatch: {}
+
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout data lake (private)
+        uses: actions/checkout@v4
+        with:
+          repository: gonghailink/aladdin-data
+          token: ${{ secrets.GH_PAT }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: adsb hourly sample
+        run: node adsb_harvest.mjs
+      - name: commit samples
+        run: |
+          git config user.name "aladdin-harvest-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add adsb
+          git diff --cached --quiet && echo "no new sample (宁缺毋滥)" || {
+            git commit -qm "adsb sample $(date -u +%FT%TZ)"
+            for i in 1 2 3; do git pull --rebase -q && git push && break || sleep 5; done
+          }
